@@ -1,0 +1,14 @@
+config ZMK_BEHAVIOR_SWITCH_KEY
+    bool "Enable switch key behavior"
+    default y
+    depends on DT_HAS_ZMK_BEHAVIOR_SWITCH_KEY_ENABLED
+    help
+      Enable switch key behavior that can select between two keycodes
+      based on a global priority state.
+
+config ZMK_BEHAVIOR_SWITCH_KEY_SET_PRIORITY
+    bool "Enable switch key set priority behavior"
+    default y
+    depends on ZMK_BEHAVIOR_SWITCH_KEY
+    help
+      Enable behavior to set the priority state for switch key behaviors.

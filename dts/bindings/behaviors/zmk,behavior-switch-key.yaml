@@ -1,0 +1,21 @@
+description: Switch key behavior
+
+compatible: "zmk,behavior-switch-key"
+
+include: one_param.yaml
+
+properties:
+  label:
+    type: string
+
+child-binding:
+  description: |
+    The switch key behavior supports two child nodes, representing the two
+    keycodes to switch between based on priority state.
+  properties:
+    bindings:
+      type: phandle-array
+      required: true
+      description: |
+        A phandle-array of behaviors to trigger when this switch key option
+        is selected based on the current priority state.
