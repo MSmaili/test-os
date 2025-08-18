@@ -4,7 +4,8 @@
 #include <zephyr/logging/log.h>
 
 #include <zmk/behavior.h>
-#include <zmk/behavior_switch_key.h>
+// Forward declaration
+int zmk_behavior_switch_key_set_priority(uint8_t priority);
 
 LOG_MODULE_DECLARE(zmk, CONFIG_ZMK_LOG_LEVEL);
 

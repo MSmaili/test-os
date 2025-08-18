@@ -5,7 +5,9 @@
 
 #include <zmk/behavior.h>
 #include <zmk/keymap.h>
-#include <zmk/behavior_switch_key.h>
+// Forward declarations - no need for separate header
+int zmk_behavior_switch_key_get_priority(void);
+int zmk_behavior_switch_key_set_priority(uint8_t priority);
 
 LOG_MODULE_DECLARE(zmk, CONFIG_ZMK_LOG_LEVEL);
 
