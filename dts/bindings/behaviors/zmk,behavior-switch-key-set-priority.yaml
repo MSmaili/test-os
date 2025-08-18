@@ -4,6 +4,4 @@ compatible: "zmk,behavior-switch-key-set-priority"
 
 include: one_param.yaml
 
-properties:
-  label:
-    type: string
+properties: {}

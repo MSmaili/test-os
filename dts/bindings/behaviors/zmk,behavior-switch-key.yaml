@@ -2,11 +2,9 @@ description: Switch key behavior
 
 compatible: "zmk,behavior-switch-key"
 
-include: one_param.yaml
+include: two_param.yaml
 
-properties:
-  label:
-    type: string
+properties: {}
 
 child-binding:
   description: |
