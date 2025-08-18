@@ -2,8 +2,16 @@
 
 #include <zephyr/device.h>
 #include <zephyr/logging/log.h>
-
+#include <drivers/behavior.h>
 #include <zmk/behavior.h>
+#include <zmk/keymap.h>
+#include <zmk/endpoints.h>
+#include <zmk/event_manager.h>
+#include <zmk/events/position_state_changed.h>
+#include <zmk/events/keycode_state_changed.h>
+#include <zmk/events/modifiers_state_changed.h>
+#include <zmk/keys.h>
+#include <zmk/hid.h>
 #include <zmk/keymap.h>
 // Forward declarations - no need for separate header
 int zmk_behavior_switch_key_get_priority(void);
