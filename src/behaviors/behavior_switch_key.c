@@ -4,13 +4,8 @@
 #include <zephyr/logging/log.h>
 
 #include <zmk/behavior.h>
-#include <zmk/keymap.h>
-#include <zmk/matrix.h>
-#include <zmk/endpoints.h>
-#include <zmk/event_manager.h>
-#include <zmk/events/keycode_state_changed.h>
-#include <zmk/events/modifiers_state_changed.h>
 #include <zmk/hid.h>
+#include <zmk/endpoints.h>
 #include <zmk/behaviors/switch_key.h>
 
 LOG_MODULE_DECLARE(zmk, CONFIG_ZMK_LOG_LEVEL);
@@ -22,46 +17,40 @@ static int behavior_switch_key_init(const struct device *dev) { return 0; }
 
 static int on_keymap_binding_pressed(struct zmk_behavior_binding *binding,
                                    struct zmk_behavior_binding_event event) {
-    // Extract keycodes from binding parameters
     uint16_t keycode1 = binding->param1;
     uint16_t keycode2 = binding->param2;
-
-    // Select keycode based on current priority
     uint16_t selected_keycode = zmk_switch_key_priority ? keycode2 : keycode1;
 
-    LOG_DBG("Switch key pressed: priority=%d, keycode1=0x%02X, keycode2=0x%02X, selected=0x%02X",
-            zmk_switch_key_priority, keycode1, keycode2, selected_keycode);
+    LOG_INF("SW_KP: pressed, priority=%d, keycode=0x%04X",
+            zmk_switch_key_priority, selected_keycode);
 
-    // Create new binding for the selected keycode
-    struct zmk_behavior_binding new_binding = {
-        .behavior_dev = "kp",
-        .param1 = selected_keycode,
-        .param2 = 0,
-    };
+    // Add key to HID report
+    int ret = zmk_hid_keyboard_press(selected_keycode);
+    if (ret < 0) {
+        LOG_ERR("Failed to press key: %d", ret);
+        return ret;
+    }
 
-    return zmk_behavior_invoke_binding(&new_binding, event, true);
+    return zmk_endpoints_send_report(ZMK_ENDPOINT_USB);
 }
 
 static int on_keymap_binding_released(struct zmk_behavior_binding *binding,
                                     struct zmk_behavior_binding_event event) {
-    // Extract keycodes from binding parameters
     uint16_t keycode1 = binding->param1;
     uint16_t keycode2 = binding->param2;
-
-    // Select same keycode as when pressed
     uint16_t selected_keycode = zmk_switch_key_priority ? keycode2 : keycode1;
 
-    LOG_DBG("Switch key released: priority=%d, selected=0x%02X",
+    LOG_INF("SW_KP: released, priority=%d, keycode=0x%04X",
             zmk_switch_key_priority, selected_keycode);
 
-    // Create new binding for the selected keycode
-    struct zmk_behavior_binding new_binding = {
-        .behavior_dev = "kp",
-        .param1 = selected_keycode,
-        .param2 = 0,
-    };
+    // Remove key from HID report
+    int ret = zmk_hid_keyboard_release(selected_keycode);
+    if (ret < 0) {
+        LOG_ERR("Failed to release key: %d", ret);
+        return ret;
+    }
 
-    return zmk_behavior_invoke_binding(&new_binding, event, false);
+    return zmk_endpoints_send_report(ZMK_ENDPOINT_USB);
 }
 
 static const struct zmk_behavior_driver_api behavior_switch_key_driver_api = {
