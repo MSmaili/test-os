@@ -1,0 +1,13 @@
+/ {
+    behaviors {
+        sw_kp: switch_key {
+            compatible = "zmk,behavior-switch-key";
+            #binding-cells = <2>;
+        };
+
+        sw_set: switch_key_set_priority {
+            compatible = "zmk,behavior-switch-key-set-priority";
+            #binding-cells = <1>;
+        };
+    };
+};

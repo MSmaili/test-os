@@ -1,7 +1,6 @@
-description: Switch key set priority behavior
-
+description: ZMK switch key set priority behavior
 compatible: "zmk,behavior-switch-key-set-priority"
-
 include: one_param.yaml
-
-properties: {}
+properties:
+  "#binding-cells":
+    const: 1

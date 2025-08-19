@@ -1,68 +1,67 @@
-#define DT_DRV_COMPAT zmk_behavior_switch_key
-
 #include <zephyr/device.h>
+#include <zephyr/init.h>
+#include <zephyr/kernel.h>
 #include <zephyr/logging/log.h>
 
 #include <zmk/behavior.h>
 #include <zmk/keymap.h>
-// Forward declarations - no need for separate header
-int zmk_behavior_switch_key_get_priority(void);
-int zmk_behavior_switch_key_set_priority(uint8_t priority);
+#include <zmk/matrix.h>
+#include <zmk/endpoints.h>
+#include <zmk/event_manager.h>
+#include <zmk/events/keycode_state_changed.h>
+#include <zmk/events/modifiers_state_changed.h>
+#include <zmk/hid.h>
+#include <zmk/behaviors/switch_key.h>
 
 LOG_MODULE_DECLARE(zmk, CONFIG_ZMK_LOG_LEVEL);
 
-// State stored in RAM only - no flash wear, resets on power cycle
-static uint8_t switch_key_priority = 0;
+// Global priority state
+uint8_t zmk_switch_key_priority = 0;
 
-int zmk_behavior_switch_key_get_priority(void) {
-    return switch_key_priority;
-}
-
-int zmk_behavior_switch_key_set_priority(uint8_t priority) {
-    if (priority > 1) {
-        return -EINVAL;
-    }
-    switch_key_priority = priority;
-    LOG_DBG("Switch key priority set to: %d", priority);
-    return 0;
-}
-
-struct behavior_switch_key_config {
-    struct zmk_behavior_binding bindings[2];
-};
-
-static int behavior_switch_key_init(const struct device *dev) {
-    return 0;
-}
+static int behavior_switch_key_init(const struct device *dev) { return 0; }
 
 static int on_keymap_binding_pressed(struct zmk_behavior_binding *binding,
                                    struct zmk_behavior_binding_event event) {
-    const struct device *dev = zmk_behavior_get_binding(binding->behavior_dev);
-    const struct behavior_switch_key_config *cfg = dev->config;
+    // Extract keycodes from binding parameters
+    uint16_t keycode1 = binding->param1;
+    uint16_t keycode2 = binding->param2;
 
-    uint8_t priority = zmk_behavior_switch_key_get_priority();
+    // Select keycode based on current priority
+    uint16_t selected_keycode = zmk_switch_key_priority ? keycode2 : keycode1;
 
-    LOG_DBG("Switch key pressed, priority: %d", priority);
+    LOG_DBG("Switch key pressed: priority=%d, keycode1=0x%02X, keycode2=0x%02X, selected=0x%02X",
+            zmk_switch_key_priority, keycode1, keycode2, selected_keycode);
 
-    // Select the appropriate binding based on priority
-    struct zmk_behavior_binding selected_binding = cfg->bindings[priority];
+    // Create new binding for the selected keycode
+    struct zmk_behavior_binding new_binding = {
+        .behavior_dev = "kp",
+        .param1 = selected_keycode,
+        .param2 = 0,
+    };
 
-    return zmk_behavior_invoke_binding(&selected_binding, event, false);
+    return zmk_behavior_invoke_binding(&new_binding, event, true);
 }
 
 static int on_keymap_binding_released(struct zmk_behavior_binding *binding,
                                     struct zmk_behavior_binding_event event) {
-    const struct device *dev = zmk_behavior_get_binding(binding->behavior_dev);
-    const struct behavior_switch_key_config *cfg = dev->config;
+    // Extract keycodes from binding parameters
+    uint16_t keycode1 = binding->param1;
+    uint16_t keycode2 = binding->param2;
 
-    uint8_t priority = zmk_behavior_switch_key_get_priority();
+    // Select same keycode as when pressed
+    uint16_t selected_keycode = zmk_switch_key_priority ? keycode2 : keycode1;
 
-    LOG_DBG("Switch key released, priority: %d", priority);
+    LOG_DBG("Switch key released: priority=%d, selected=0x%02X",
+            zmk_switch_key_priority, selected_keycode);
 
-    // Select the appropriate binding based on priority
-    struct zmk_behavior_binding selected_binding = cfg->bindings[priority];
+    // Create new binding for the selected keycode
+    struct zmk_behavior_binding new_binding = {
+        .behavior_dev = "kp",
+        .param1 = selected_keycode,
+        .param2 = 0,
+    };
 
-    return zmk_behavior_invoke_binding(&selected_binding, event, true);
+    return zmk_behavior_invoke_binding(&new_binding, event, false);
 }
 
 static const struct zmk_behavior_driver_api behavior_switch_key_driver_api = {
@@ -70,15 +69,6 @@ static const struct zmk_behavior_driver_api behavior_switch_key_driver_api = {
     .binding_released = on_keymap_binding_released,
 };
 
-#define SWITCH_KEY_INST(n)                                                                        \
-    static struct behavior_switch_key_config behavior_switch_key_config_##n = {                   \
-        .bindings = {                                                                              \
-            ZMK_KEYMAP_EXTRACT_BINDING(0, DT_DRV_INST(n)),                                       \
-            ZMK_KEYMAP_EXTRACT_BINDING(1, DT_DRV_INST(n)),                                       \
-        },                                                                                         \
-    };                                                                                             \
-    BEHAVIOR_DT_INST_DEFINE(n, behavior_switch_key_init, NULL, NULL,                             \
-                           &behavior_switch_key_config_##n, POST_KERNEL,                          \
-                           CONFIG_KERNEL_INIT_PRIORITY_DEFAULT, &behavior_switch_key_driver_api);
-
-DT_INST_FOREACH_STATUS_OKAY(SWITCH_KEY_INST)
+BEHAVIOR_DT_DEFINE(sw_kp, behavior_switch_key_init, NULL, NULL, NULL,
+                   POST_KERNEL, CONFIG_KERNEL_INIT_PRIORITY_DEFAULT,
+                   &behavior_switch_key_driver_api);
