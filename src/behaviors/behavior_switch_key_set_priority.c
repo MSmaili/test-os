@@ -2,19 +2,19 @@
 
 #include <zephyr/device.h>
 #include <zephyr/logging/log.h>
-#include <drivers/behavior.h>
 
-LOG_MODULE_DECLARE(zmk, CONFIG_ZMK_LOG_LEVEL);
-
+#include <zmk/behavior.h>
 // Forward declaration
 int zmk_behavior_switch_key_set_priority(uint8_t priority);
+
+LOG_MODULE_DECLARE(zmk, CONFIG_ZMK_LOG_LEVEL);
 
 static int behavior_switch_key_set_priority_init(const struct device *dev) {
     return 0;
 }
 
-static int on_set_priority_binding_pressed(struct zmk_behavior_binding *binding,
-                                          struct zmk_behavior_binding_event event) {
+static int on_keymap_binding_pressed(struct zmk_behavior_binding *binding,
+                                   struct zmk_behavior_binding_event event) {
     // The parameter (binding->param1) should be 0 or 1
     uint8_t priority = binding->param1;
 
@@ -29,15 +29,15 @@ static int on_set_priority_binding_pressed(struct zmk_behavior_binding *binding,
     return ZMK_BEHAVIOR_OPAQUE;
 }
 
-static int on_set_priority_binding_released(struct zmk_behavior_binding *binding,
-                                           struct zmk_behavior_binding_event event) {
+static int on_keymap_binding_released(struct zmk_behavior_binding *binding,
+                                    struct zmk_behavior_binding_event event) {
     // No action needed on release
     return ZMK_BEHAVIOR_OPAQUE;
 }
 
-static const struct behavior_driver_api behavior_switch_key_set_priority_driver_api = {
-    .binding_pressed = on_set_priority_binding_pressed,
-    .binding_released = on_set_priority_binding_released,
+static const struct zmk_behavior_driver_api behavior_switch_key_set_priority_driver_api = {
+    .binding_pressed = on_keymap_binding_pressed,
+    .binding_released = on_keymap_binding_released,
 };
 
 #define SET_PRIORITY_INST(n)                                                                      \
